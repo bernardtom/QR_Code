@@ -6,6 +6,11 @@ class Encoder:
         self.err_corr_level = err_corr_level
 
     def select_mode(self)->str:
+        """
+        Select the better mode according to the data string by converting characters into bytes and checking in mode byte table
+        :return: mode : numeric | alphanumeric | byte
+        :rtype: str
+        """
         mode = 'numeric'
         for c in self.data_string:
             if self.char_in_mode(c,'byte'):
@@ -19,7 +24,12 @@ class Encoder:
         return mode
 
     def char_in_mode(self,char:str,mode:str)->bool:
-        # Check for each character if their unicode code is inside the bytes interval of the given mode
+        """
+        Return True if the character is in the mode byte table
+        :type char: str
+        :type mode: str 
+        :rtype: bool
+        """
         char_unicode = ord(char)
         inside = False
         for byte_range in self.config['mode_bytes'][mode]:
