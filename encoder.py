@@ -41,3 +41,10 @@ class Encoder:
             #print(f'char : {char} not in {mode} ; hex : {hex(char_unicode)}')
             return False
         return True
+    
+    def select_version(self)->int:
+        for version in self.config['data_capacity'][self.mode]:
+            data_capacity = self.config['data_capacity'][self.mode][version][self.err_corr_level]
+            if len(self.data_string) <= data_capacity:
+                return int(version)
+        raise ValueError('No QR version founded for the size of input')
