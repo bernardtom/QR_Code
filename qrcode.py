@@ -1,10 +1,12 @@
 import numpy as np
 import json
 
+from encoder import Encoder
+
 CONFIG_FILE = 'config.json'
 
 class QRCode:
-    def __init__(self,data_string:str,correction_level="Q"):
+    def __init__(self,data_string:str,correction_level:str):
         # Load config file
         self.config = self.load_config(CONFIG_FILE)
 
@@ -22,6 +24,13 @@ class QRCode:
         
         self.data_string = data_string
         self.correction_level = correction_level
+        self.mode, self.version = self.data_analysis()
+
+    def data_analysis(self)->list:
+        self.encoder = Encoder(self.config,self.data_string,self.correction_level)
+        mode = self.encoder.select_mode()
+        version = self.encoder.select_version()
+        return mode,version
 
     def load_config(self,filename:str)->dict:
         try:
