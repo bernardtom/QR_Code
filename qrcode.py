@@ -10,14 +10,14 @@ class QRCode:
 
         # Check inputs types
         if not isinstance(data_string,str):
-            raise TypeError('Invalid Type for error correction level parameter')
+            raise TypeError('Invalid Type for data string level parameter')
         if not isinstance(correction_level,str):    
             raise TypeError('Invalid Type for error correction level parameter')
         
         # Check inputs values
         if not len(data_string) > 0:
             raise ValueError('Empty Value for data_string parameter')
-        if not correction_level in self.encode_config['correction_levels']:           
+        if not correction_level in self.config['correction_levels']:           
             raise ValueError('Invalide Value for error correction level parameter')
         
         self.data_string = data_string
