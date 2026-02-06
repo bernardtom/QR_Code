@@ -21,6 +21,7 @@ class Encoder:
             else: 
                 if not self.char_in_mode(c,'numeric'):
                     raise ValueError('Character not available')
+        self.mode = mode
         return mode
 
     def char_in_mode(self,char:str,mode:str)->bool:
