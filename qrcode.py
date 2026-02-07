@@ -2,6 +2,7 @@ import numpy as np
 import json
 
 from encoder import Encoder
+from image_generator import QRImage
 
 CONFIG_FILE = 'config.json'
 
@@ -27,7 +28,6 @@ class QRCode:
         self.mode, self.version = self.data_analysis()
         self.byte_sequence = self.get_byte_sequence()
 
-
     def data_analysis(self)->list:
         self.encoder = Encoder(self.config,self.data_string,self.correction_level)
         mode = self.encoder.select_mode()
@@ -38,6 +38,10 @@ class QRCode:
         data_codewords = self.encoder.encode()
         data_blocks, correction_block = self.encoder.add_error_correction(data_codewords)
         return self.encoder.get_final_sequence(data_blocks,correction_block)
+    
+    def show(self,matrix:np.ndarray)->None:
+        img_generator = QRImage(matrix)
+        img_generator.generate('img')
 
     def load_config(self,filename:str)->dict:
         try:
