@@ -25,14 +25,19 @@ class QRCode:
         self.data_string = data_string
         self.correction_level = correction_level
         self.mode, self.version = self.data_analysis()
-        data_codewords = self.encoder.encode()
-        print(data_codewords)
+        self.byte_sequence = self.get_byte_sequence()
+
 
     def data_analysis(self)->list:
         self.encoder = Encoder(self.config,self.data_string,self.correction_level)
         mode = self.encoder.select_mode()
         version = self.encoder.select_version()
         return mode,version
+    
+    def get_byte_sequence(self):
+        data_codewords = self.encoder.encode()
+        data_blocks, correction_block = self.encoder.add_error_correction(data_codewords)
+        return self.encoder.get_final_sequence(data_blocks,correction_block)
 
     def load_config(self,filename:str)->dict:
         try:

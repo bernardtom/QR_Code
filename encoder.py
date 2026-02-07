@@ -1,3 +1,4 @@
+from reedsolo import RSCodec
 
 class Encoder:
     def __init__(self,config:dict,data_string:str,err_corr_level:str):
@@ -64,11 +65,11 @@ class Encoder:
         """
         mode_ind = self.get_mode_indicator()
         char_count_ind = self.get_char_count_indicator()
-        data_sequence = self.get_data_sequence()
+        sequence = self.get_data_sequence()
         terminator = self.get_terminator()
-        data_bitstream = mode_ind + char_count_ind + ''.join(map(str,data_sequence)) + terminator 
-        data_codewords = self.get_data_codewords(data_bitstream)
-        return data_codewords
+        bitstream = mode_ind + char_count_ind + ''.join(map(str,sequence)) + terminator 
+        codewords = self.get_data_codewords(bitstream)
+        return codewords
 
     def get_data_sequence(self)->list[str]:
         """
@@ -104,7 +105,7 @@ class Encoder:
                 sequence = [bin(ord(char))[2:] for char in self.data_string]
         return sequence        
 
-    def get_data_codewords(self,data_bitstream:str)->list[str]:
+    def get_data_codewords(self,bitstream:str)->list[str]:
         """
         Split into 8 bit codewords and add pad bytes if necessary
         :type data_bitstream: str
@@ -112,7 +113,7 @@ class Encoder:
         :rtype: list[str]
         """
         # Split into 8 bit codewords 
-        data_codewords = self.split(data_bitstream,8)
+        data_codewords = self.split(bitstream,8)
         for i in range(len(data_codewords)):
             if len(data_codewords[i]) < 8:
                 data_codewords[i] = data_codewords[i].ljust(8,'0')
@@ -140,8 +141,72 @@ class Encoder:
 
     def get_terminator(self)->str:
         return self.config['terminator']
-    
+
+    ################ CORRECTION ERROR ##############
+    def add_error_correction(self,data_codewords)->tuple[list[list[str]]]:
+        """
+        Divide data codewords into blocks. For each block, calculate error correction of data. 
+        Return data and correction blocks
+        :return: data_blocks, correction_blocks
+        :rtype: tuple[list[list[str]]]
+        """
+        blocks_parameters = self.config['data_blocks_parameters'][str(self.version)][self.err_corr_level]
+        correction_blocks = []
+        data_blocks = []
+
+        #For each parameters : create blocks with codewords inside
+        for parameter in blocks_parameters:
+            nb_blocks = parameter[0]
+            nb_total_codewords = parameter[1]
+            nb_data_codewords = parameter[2]
+            nb_correction_codewords = nb_total_codewords - nb_data_codewords
+
+            for i in range(nb_blocks):
+                # Get data codewords into datas block
+                data_block = data_codewords[0:nb_data_codewords]
+                data_blocks.append(data_block) # list[str]
+                # Get error correction of data block 
+                corr_block = self.get_correction_codewords(data_block,nb_correction_codewords)
+                correction_blocks.append(corr_block)
+                popped = [data_codewords.pop(0) for i in range(nb_data_codewords)]
+        return data_blocks,correction_blocks
+
+    def get_correction_codewords(self,data_codewords:list[str],nb_corr_codewords:int)->list[str]:
+        """
+        Return error correction codewords of data       
+        :param data_block: list of data codewords
+        :type data_block: list[str]
+        :param nb_corr_codewords: Number of error correctin codewords of the block
+        :type nb_corr_codewords: int
+        :return: correction block
+        :rtype: list[str]
+        """
+        data_bytes = bytes([int(d,2) for d in data_codewords])
+        rs = RSCodec(nb_corr_codewords)
+        encode = rs.encode(data_bytes)
+        return [bin(byte)[2:].rjust(8,'0') for byte in encode[-nb_corr_codewords:]]
+
+    ################ FINAL SEQUENCE ##############
+    def get_final_sequence(self,data_blocks:list[list[str]],corr_blocks:list[list[str]])->str:
+        data_sequence = self.get_sequence(data_blocks)
+        err_sequence = self.get_sequence(corr_blocks)
+        data_sequence.extend(err_sequence)
+        return self.concatenate(data_sequence)
+
+    def get_sequence(self,blocks:list[list[str]])->list:
+        blocks_sizes = [len(block) for block in blocks]
+        max_blocks_size = max(blocks_sizes)
+        sequence = []
+        for i in range(max_blocks_size):
+            for block in blocks:
+                if len(block)-1 >= i:
+                    sequence.append(block[i])
+        return sequence    
+
     #################### TOOLS ####################
     def split(self,list:list,size:int):
         return [list[i:i+size] for i in range(0,len(list),size)]
+
+    def concatenate(self,list:list[str])->str:
+        return ''.join(map(str,list))
 
