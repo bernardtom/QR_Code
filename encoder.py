@@ -4,6 +4,8 @@ class Encoder:
         self.config = config
         self.data_string = data_string
         self.err_corr_level = err_corr_level
+        self.mode = ''
+        self.version = 40
 
     def select_mode(self)->str:
         """
@@ -47,5 +49,20 @@ class Encoder:
         for version in self.config['data_capacity'][self.mode]:
             data_capacity = self.config['data_capacity'][self.mode][version][self.err_corr_level]
             if len(self.data_string) <= data_capacity:
+                self.version = version
                 return int(version)
         raise ValueError('No QR version founded for the size of input')
+    
+    ################## INDICATORS ##################
+    def get_mode_indicator(self)->str:
+        return self.config['mode_indicators'][self.mode]
+
+    def get_char_count_indicator(self)->str:
+        for version in self.config['char_count_indicator_sizes'][self.mode]:
+            version_min, version_max = version.split('-')
+            if int(version_min) <= self.version <= int(version_max):
+                count_ind_size = self.config['char_count_indicator_sizes'][self.mode][version]
+                return bin(len(self.data_string))[2:].rjust(count_ind_size,'0')
+
+    def get_terminator(self)->str:
+        return self.config['terminator']
