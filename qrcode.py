@@ -25,6 +25,8 @@ class QRCode:
         self.data_string = data_string
         self.correction_level = correction_level
         self.mode, self.version = self.data_analysis()
+        data_codewords = self.encoder.encode()
+        print(data_codewords)
 
     def data_analysis(self)->list:
         self.encoder = Encoder(self.config,self.data_string,self.correction_level)
