@@ -52,7 +52,7 @@ class Encoder:
             data_capacity = self.config['data_capacity'][self.mode][version][self.err_corr_level]
             if len(self.data_string) <= data_capacity:
                 self.version = int(version)
-                return int(version)
+                return self.version
         raise ValueError('No QR version founded for the size of input')
     
     ################## ENCODE DATA ##################
